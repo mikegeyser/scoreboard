@@ -8,6 +8,9 @@ class Scoreboard extends Component {
   }
 
   render() {
+    // If we need to implement 'match tracking' then getGameScore will likely need to
+    // move to handlePlayerScore, so that we can change the match state when the game 
+    // is won.
     const { scoreCall } = getGameScore(this.state.gamePoints);
 
     return (
