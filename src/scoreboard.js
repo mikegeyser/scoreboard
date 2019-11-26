@@ -5,22 +5,23 @@ export const initialState = {
   }
 };
 
+const doubleDeuceState = {
+  gamePoints: {
+    player1: 3,
+    player2: 3
+  }
+};
+
 export function setScore(playerNumber, previousState) {
   const player = `player${playerNumber}`;
 
-  let gamePoints = Object.assign({}, previousState.gamePoints, {
+  const gamePoints = Object.assign({}, previousState.gamePoints, {
     [player]: previousState.gamePoints[player] + 1
   });
 
-  // Todo: This is clunky, but any attempt to shorten it made the result far 
-  // less legible, obscuring meaning.
-  const isDoubleDeuce = gamePoints.player1 === 4 && gamePoints.player2 === 4;
-
+  const isDoubleDeuce = areTiedAt(4, gamePoints.player1, gamePoints.player2);
   if (isDoubleDeuce) {
-    gamePoints = {
-      player1: 3,
-      player2: 3
-    };
+    return doubleDeuceState;
   }
 
   return {
@@ -31,30 +32,43 @@ export function setScore(playerNumber, previousState) {
 export function getGameScore(gamePoints) {
   const { player1, player2 } = gamePoints;
 
-  const pointsAreEqual = player1 === player2;
-  const isDeuce = pointsAreEqual && player1 === 3;
-
+  const isDeuce = areTiedAt(3, player1, player2);
   if (isDeuce) {
     return { scoreCall: "Deuce" };
   }
 
-  if (pointsAreEqual) {
+  const areTied = player1 === player2;
+  if (areTied) {
     return { scoreCall: `${getCall(player1)}-all` };
   }
 
-  const leadingPlayer = player1 > player2 ? "player1" : "player2";
+  const [leadingPlayer, score, difference] = (player1 > player2)
+      ? ["player1", player1, player1 - player2]
+      : ["player2", player2, player2 - player1];
 
-  if (gamePoints[leadingPlayer] > 3) {
-    return {
-      scoreCall: `Game, ${leadingPlayer}`,
-      winningPlayer: leadingPlayer
-    };
+  if (score > 3) {
+    // Potential victory.
+    if (difference > 1) {
+      return {
+        scoreCall: `Game, ${leadingPlayer}`,
+        winningPlayer: leadingPlayer
+      };
+    } else {
+      // Tie breaker.
+      return {
+        scoreCall: `${getCall(score)}, ${leadingPlayer}`
+      };
+    }
   }
-
+  
   return {
     scoreCall: `${getCall(player1)}-${getCall(player2)}`,
     winningPlayer: null
   };
+}
+
+function areTiedAt(point, ...players) {
+  return players.every(p => p === point);
 }
 
 function getCall(points) {
